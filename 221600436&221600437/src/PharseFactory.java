@@ -5,7 +5,7 @@ class PhraseFactory {//用于生成短语
     private int size;
     private PhraseBorder[] pool;
 
-    public PhraseFactory(int sizeNumber) {
+    public PhraseFactory(int sizeNumber) {//循环列表实现构造短语
         size = sizeNumber;
         formerIterator = size - 1;
         pool = new PhraseBorder[size];
