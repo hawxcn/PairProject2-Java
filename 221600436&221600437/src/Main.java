@@ -6,8 +6,8 @@ public class Main {
         long start,end;
         start = System.currentTimeMillis();
 
-        String inputFileName="inputrrr.txt",outputFileName="result.txt";//默认文件名
-        int m=3,n=10,w=0,CodeMode=0;//默认 词组长度,输出数量,是否采用权重,编码模式
+        String inputFileName="input.txt",outputFileName="result.txt";//默认文件名
+        int m=3,n=10,w=1,CodeMode=0;//默认 词组长度,输出数量,是否采用权重,编码模式
         Result tempResult=new Result();
         for (int i=0;i<args.length;i++) {
             switch (args[i]){

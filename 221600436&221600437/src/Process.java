@@ -11,6 +11,22 @@ public class Process {
 //    public Process(Result result_class){
 //        resultClass=result_class;
 //    }
+    static Pattern phrasePattern = Pattern.compile("([a-zA-Z]{4,}[a-zA-Z0-9]*(?:[^a-zA-Z0-9]+|$))");
+    static Pattern wordPattern = Pattern.compile("(?:^|[^a-zA-Z0-9])([a-zA-Z]{4,}[a-zA-Z0-9]*)");//
+    static Pattern contentPattern = Pattern.compile("[\\x21-\\x2f\\x3a-\\x7e]");
+    static Pattern titlePattern = Pattern.compile("Title: ");
+    static Pattern abstractPattern = Pattern.compile("Abstract: ");
+    static Pattern OtherCodePattern = Pattern.compile("[^\\x00-\\x7f]");
+    private static void commonProcess(Result resultClass, int mode,int i,String s,int l){
+    }
+    private static String removeOtherCode(String s){
+        Matcher m1 = OtherCodePattern.matcher(s);
+        return m1.replaceAll("");
+    }
+    private static String replaceOtherCode(String s){
+        Matcher m1 = OtherCodePattern.matcher(s);
+        return m1.replaceAll(" ");
+    }
     public static void read_file(String file_name, String outputFileName, Result resultClass, int CodeMode, int outputSize, int mode, int weight) {//1 GBK
         MyBufferedReader bufferedReader = null;
         BufferedWriter bufferedWriter = null;
@@ -36,10 +52,10 @@ public class Process {
                         if (hasContent(s)) {//判断是否有除数字外的可显示字符和内容
                             i++;
                             resultClass.line_count_plus();
-                            s = s.replaceAll("[^\\x00-\\x80]", "");//可改编译 加快?
                             CutHeadResult r = cutHeadWithWeight(s);//输出含有判断权重结果的结构,清除无关信息的字符串
-                            resultClass.char_count_plus(r.resultStr.length());//统计字符数
-                            process_line_withRegularExpression(r.resultStr, resultClass, r.weight);
+                            s=replaceOtherCode(r.resultStr);
+                            resultClass.char_count_plus(removeOtherCode(r.resultStr).length());//统计字符数
+                            process_line_withRegularExpression(s, resultClass, r.weight);
                             lastLine = allLine;
                         }
 
@@ -50,9 +66,9 @@ public class Process {
                         if (hasContent(s)) {//判断是否有可显示字符和除数字外的内容
                             i++;
                             resultClass.line_count_plus();
-                            s = s.replaceAll("[^\\x00-\\x80]", "");
                             s = cutHead(s);
-                            resultClass.char_count_plus(s.length());//统计字符数
+                            resultClass.char_count_plus(removeOtherCode(s).length());//统计字符数
+                            s=replaceOtherCode(s);
                             process_line_withRegularExpression(s, resultClass,1);
                             lastLine = allLine;
                         }
@@ -65,10 +81,10 @@ public class Process {
                         if (hasContent(s)) {//判断是否有可显示字符和除数字外的内容
                             i++;
                             resultClass.line_count_plus();
-                            s = s.replaceAll("[^\\x00-\\x80]", "");
                             CutHeadResult r = cutHeadWithWeight(s);//输出含有判断权重结果的结构,清除无关信息的字符串
-                            resultClass.char_count_plus(r.resultStr.length());//统计字符数
-                            process_line_withPhrase(r.resultStr, resultClass, mode, r.weight);
+                            resultClass.char_count_plus(removeOtherCode(r.resultStr).length());//统计字符数
+                            s=replaceOtherCode(r.resultStr);
+                            process_line_withPhrase(s, resultClass, mode, r.weight);
                             lastLine = allLine;
                         }
                     }
@@ -78,9 +94,9 @@ public class Process {
                         if (hasContent(s)) {//判断是否有可显示字符和除数字外的内容
                             i++;
                             resultClass.line_count_plus();
-                            s = s.replaceAll("[^\\x00-\\x80]", "");
                             s = cutHead(s);
-                            resultClass.char_count_plus(s.length());//统计字符数
+                            resultClass.char_count_plus(removeOtherCode(s).length());//统计字符数
+                            s=replaceOtherCode(s);
                             process_line_withPhrase(s, resultClass, mode,1);
                             lastLine = allLine;
                         }
@@ -136,13 +152,11 @@ public class Process {
     }
 
     public static String cutHead(String str) {
-        Pattern p1 = Pattern.compile("Title: ");
-        Matcher m1 = p1.matcher(str);
+        Matcher m1 = titlePattern.matcher(str);
         if (m1.lookingAt()) {//
             return str.substring(m1.end());//找到title头切头
         }
-        Pattern p2 = Pattern.compile("Abstract: ");
-        Matcher m2 = p2.matcher(str);
+        Matcher m2 = abstractPattern.matcher(str);
         if (m2.lookingAt()) {
             return str.substring(m2.end());//找到title头切头
         }
@@ -150,13 +164,11 @@ public class Process {
     }
 
     public static CutHeadResult cutHeadWithWeight(String str) {
-        Pattern p1 = Pattern.compile("Title: ");
-        Matcher m1 = p1.matcher(str);
+        Matcher m1 = titlePattern.matcher(str);
         if (m1.lookingAt()) {//
             return new CutHeadResult(10, str.substring(m1.end()));//找到title头切头
         }
-        Pattern p2 = Pattern.compile("Abstract: ");
-        Matcher m2 = p2.matcher(str);
+        Matcher m2 = abstractPattern.matcher(str);
         if (m2.lookingAt()) {
             return new CutHeadResult(1, str.substring(m2.end()));//找到title头切头
         }
@@ -194,22 +206,19 @@ public class Process {
     }
 
     public static boolean hasContent(String str) {//判断是否有除数字外的非空白ascii字符
-        Pattern p = Pattern.compile("[\\x21-\\x2f\\x3a-\\x7e]");
-        Matcher m = p.matcher(str);
+        Matcher m = contentPattern.matcher(str);
         return m.find();
     }
 
 
     private static void process_line_withRegularExpression(String str, Result resultClass, int weight) {
-        Pattern p = Pattern.compile("(?:^|[^a-zA-Z0-9])([a-zA-Z]{4,}[a-zA-Z0-9]*)");//
-        Matcher m = p.matcher(str);
+        Matcher m = wordPattern.matcher(str);
         while (m.find()) {
             resultClass.addWord(m.group(1), weight);
         }
     }
     private static void process_line_withPhrase(String str, Result resultClass, int number,int weight) {
-        Pattern p = Pattern.compile("([a-zA-Z]{4,}[a-zA-Z0-9]*(?:[^a-zA-Z0-9]+|$))");
-        Matcher m = p.matcher(str);
+        Matcher m = phrasePattern.matcher(str);
         PhraseFactory phraseFactory = new PhraseFactory(number);
         PhraseBorder phraseBorder;//result
         while (m.find()) {
@@ -223,8 +232,6 @@ public class Process {
             }
         }
     }
-
-
 }
 
 

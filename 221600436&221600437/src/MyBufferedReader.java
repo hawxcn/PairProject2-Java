@@ -27,8 +27,8 @@ public class MyBufferedReader extends Reader {
 
     private boolean markedSkipLF = false;
 
-    private static int defaultCharBufferSize = 81920;
-    private static int defaultExpectedLineLength = 200;
+    private static int defaultCharBufferSize = 8192;
+    private static int defaultExpectedLineLength = 800;
 
 
     public MyBufferedReader(Reader in, int sz) {
