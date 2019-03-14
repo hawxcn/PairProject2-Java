@@ -11,6 +11,11 @@ public class Process {
 //    public Process(Result result_class){
 //        resultClass=result_class;
 //    }
+    static Pattern phrasePattern = Pattern.compile("([a-zA-Z]{4,}[a-zA-Z0-9]*(?:[^a-zA-Z0-9]+|$))");
+    static Pattern wordPattern = Pattern.compile("(?:^|[^a-zA-Z0-9])([a-zA-Z]{4,}[a-zA-Z0-9]*)");//
+    static Pattern contentPattern = Pattern.compile("[\\x21-\\x2f\\x3a-\\x7e]");
+    static Pattern titlePattern = Pattern.compile("Title: ");
+    static Pattern abstractPattern = Pattern.compile("Abstract: ");
     public static void read_file(String file_name, String outputFileName, Result resultClass, int CodeMode, int outputSize, int mode, int weight) {//1 GBK
         MyBufferedReader bufferedReader = null;
         BufferedWriter bufferedWriter = null;
@@ -136,13 +141,11 @@ public class Process {
     }
 
     public static String cutHead(String str) {
-        Pattern p1 = Pattern.compile("Title: ");
-        Matcher m1 = p1.matcher(str);
+        Matcher m1 = titlePattern.matcher(str);
         if (m1.lookingAt()) {//
             return str.substring(m1.end());//找到title头切头
         }
-        Pattern p2 = Pattern.compile("Abstract: ");
-        Matcher m2 = p2.matcher(str);
+        Matcher m2 = abstractPattern.matcher(str);
         if (m2.lookingAt()) {
             return str.substring(m2.end());//找到title头切头
         }
@@ -150,13 +153,11 @@ public class Process {
     }
 
     public static CutHeadResult cutHeadWithWeight(String str) {
-        Pattern p1 = Pattern.compile("Title: ");
-        Matcher m1 = p1.matcher(str);
+        Matcher m1 = titlePattern.matcher(str);
         if (m1.lookingAt()) {//
             return new CutHeadResult(10, str.substring(m1.end()));//找到title头切头
         }
-        Pattern p2 = Pattern.compile("Abstract: ");
-        Matcher m2 = p2.matcher(str);
+        Matcher m2 = abstractPattern.matcher(str);
         if (m2.lookingAt()) {
             return new CutHeadResult(1, str.substring(m2.end()));//找到title头切头
         }
@@ -194,22 +195,19 @@ public class Process {
     }
 
     public static boolean hasContent(String str) {//判断是否有除数字外的非空白ascii字符
-        Pattern p = Pattern.compile("[\\x21-\\x2f\\x3a-\\x7e]");
-        Matcher m = p.matcher(str);
+        Matcher m = contentPattern.matcher(str);
         return m.find();
     }
 
 
     private static void process_line_withRegularExpression(String str, Result resultClass, int weight) {
-        Pattern p = Pattern.compile("(?:^|[^a-zA-Z0-9])([a-zA-Z]{4,}[a-zA-Z0-9]*)");//
-        Matcher m = p.matcher(str);
+        Matcher m = wordPattern.matcher(str);
         while (m.find()) {
             resultClass.addWord(m.group(1), weight);
         }
     }
     private static void process_line_withPhrase(String str, Result resultClass, int number,int weight) {
-        Pattern p = Pattern.compile("([a-zA-Z]{4,}[a-zA-Z0-9]*(?:[^a-zA-Z0-9]+|$))");
-        Matcher m = p.matcher(str);
+        Matcher m = phrasePattern.matcher(str);
         PhraseFactory phraseFactory = new PhraseFactory(number);
         PhraseBorder phraseBorder;//result
         while (m.find()) {
@@ -223,8 +221,6 @@ public class Process {
             }
         }
     }
-
-
 }
 
 
